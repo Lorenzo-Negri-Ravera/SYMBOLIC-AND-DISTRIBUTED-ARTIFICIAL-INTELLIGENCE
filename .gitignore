@@ -1,0 +1,63 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+.env
+
+# =========================
+# Java / Jason / SARL
+# =========================
+*.class
+*.jar
+*.war
+*.ear
+bin/
+build/
+target/
+out/
+*.log
+# src-gen/
+
+# =========================
+# IDEs (Eclipse, IntelliJ, VSCode)
+# =========================
+.idea/
+.vscode/
+*.swp
+*.swo
+.settings/
+.classpath
+.project
+
+# =========================
+# OS Generated Files (Windows & macOS)
+# =========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+# VS Code Local History
+.history/
+
+# Blocca le cartelle ovunque si trovino nel progetto
+**/.history/
+**/src-gen/
+**/.metadata/
+**/bin/
+**/build/
+**/venv/
+**/.venv/
+__pycache__/
+
+**/io.sarl.eclipse.products*/
+**/.gradle/
+
+*.zip

@@ -1,0 +1,18 @@
+MAS domestic_robot {
+    environment: HouseEnv(gui) // use "nogui" as parameter to not show the GUI
+    agents: 
+        robot;
+        robotConcierge;
+        owner;
+        supermarket;
+        robotCleaner;
+        robotCleaner2 robotCleaner.asl;
+        robotCleaner3 robotCleaner.asl;
+        robotCleaner4 robotCleaner.asl;
+        robotCleaner5 robotCleaner.asl;
+        robotCleaner6 robotCleaner.asl;
+        robotCleaner7 robotCleaner.asl;
+        robotCleaner8 robotCleaner.asl;
+        robotCleaner9 robotCleaner.asl;
+        robotCleaner10 robotCleaner.asl;
+}
