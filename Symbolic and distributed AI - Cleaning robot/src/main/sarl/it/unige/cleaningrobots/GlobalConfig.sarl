@@ -1,0 +1,8 @@
+package it.unige.cleaningrobots
+
+class GlobalConfig {
+	// Variabili globali del progetto
+	public static val GRID_SIZE = 20
+	public static val NUM_AGENTS = 3
+	public static val MAX_DIRT = 15
+}

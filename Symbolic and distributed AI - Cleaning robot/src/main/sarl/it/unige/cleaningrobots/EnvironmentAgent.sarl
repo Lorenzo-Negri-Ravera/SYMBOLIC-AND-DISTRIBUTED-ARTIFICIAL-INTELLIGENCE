@@ -1,0 +1,93 @@
+package it.unige.cleaningrobots
+
+import io.sarl.api.core.Destroy
+import io.sarl.api.core.Initialize
+import io.sarl.api.core.Logging
+import io.sarl.api.core.Lifecycle
+import io.sarl.api.core.DefaultContextInteractions
+import io.sarl.api.core.Schedules
+
+import java.util.Random
+import java.util.ArrayList
+
+agent EnvironmentAgent {
+	uses Logging, Schedules, DefaultContextInteractions, Lifecycle
+
+	var seed = 42
+	var random = new Random(seed)
+	var spawn_rate_dirt = 4000
+	var count_gardbage = 0
+
+	// Dynamic list to hold active garbage coordinates
+	var gardbageList = new ArrayList<String>()
+
+	// Initialization of the environment
+	on Initialize {
+
+		// Spawn Incinerator Agent at center
+		var xIncinerator = GlobalConfig.GRID_SIZE / 2
+		var yIncinerator = GlobalConfig.GRID_SIZE / 2
+		spawn(IncineratorAgent, xIncinerator, yIncinerator)
+		info("Incinerator Agent spawned at position " + xIncinerator + ", " + yIncinerator)
+
+		// Spawn Explorer agents at random positions
+		for (i : 1 .. GlobalConfig.NUM_AGENTS) {
+			var xCleaner = random.nextInt(GlobalConfig.GRID_SIZE)
+			var yCleaner = random.nextInt(GlobalConfig.GRID_SIZE)
+
+			// Evita che nascano esattamente sopra l'inceneritore
+			while (xCleaner == xIncinerator && yCleaner == yIncinerator) {
+				xCleaner = random.nextInt(GlobalConfig.GRID_SIZE)
+				yCleaner = random.nextInt(GlobalConfig.GRID_SIZE)
+			}
+
+			spawn(ExplorerAgentt, xCleaner, yCleaner)
+			info("Explorer Agent " + i + " spawned at position " + xCleaner + ", " + yCleaner)
+		}
+		info("All agents have been initialized.")
+
+		// Scheduled task for periodic garbage generation
+		var spawnTask = task("garbage_spawner")
+		spawnTask.every(spawn_rate_dirt) [
+			if (count_gardbage < GlobalConfig.MAX_DIRT) {
+				var XDirt = random.nextInt(GlobalConfig.GRID_SIZE)
+				var YDirt = random.nextInt(GlobalConfig.GRID_SIZE)
+				var newDirt = XDirt + "," + YDirt
+
+				var IncineratorPos = (XDirt == xIncinerator) && (YDirt == yIncinerator)
+
+				if (!gardbageList.contains(newDirt) && !IncineratorPos) {
+					gardbageList.add(newDirt)
+					count_gardbage++
+					info("SPAWN GARBAGE: new item at " + newDirt + " (" + count_gardbage + "/" + GlobalConfig.MAX_DIRT +
+						")")
+				}
+			} else {
+				info("Max garbage generation reached (" + GlobalConfig.MAX_DIRT + "). Stopping spawner.")
+				cancel(spawnTask)
+			}
+		]
+	}
+
+	// Handles movement perceptions
+	on NextCellMovement {
+		var pos = occurrence.x + "," + occurrence.y
+		var dirtFound = false
+
+		if (gardbageList.contains(pos)) {
+			dirtFound = true
+		}
+		emit(new EnvironmentPerception(occurrence.x, occurrence.y, dirtFound))[it == occurrence.source]
+	}
+
+	// Handles garbage pickup and removes it from the list
+	on PickGarbage {
+		var pos = occurrence.x + "," + occurrence.y
+		gardbageList.remove(pos)
+		info("PICK: Garbage collected at " + pos + ". Remaining in environment: " + gardbageList.size)
+	}
+
+	on Destroy {
+		info("Environment agent terminated.")
+	}
+}

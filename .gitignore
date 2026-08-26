@@ -21,7 +21,6 @@ build/
 target/
 out/
 *.log
-# src-gen/
 
 # =========================
 # IDEs (Eclipse, IntelliJ, VSCode)
@@ -44,10 +43,10 @@ out/
 .Trashes
 ehthumbs.db
 Thumbs.db
-# VS Code Local History
-.history/
 
-# Blocca le cartelle ovunque si trovino nel progetto
+# =========================
+# Cartelle temporanee e IDE di SARL da bloccare ovunque
+# =========================
 **/.history/
 **/src-gen/
 **/.metadata/
@@ -56,8 +55,6 @@ Thumbs.db
 **/venv/
 **/.venv/
 __pycache__/
-
 **/io.sarl.eclipse.products*/
 **/.gradle/
-
 *.zip

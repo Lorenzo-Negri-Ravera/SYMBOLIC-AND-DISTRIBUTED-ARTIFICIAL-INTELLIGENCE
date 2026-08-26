@@ -1,0 +1,106 @@
+package it.unige.cleaningrobots
+
+import io.sarl.api.core.Initialize
+import io.sarl.api.core.Logging
+import io.sarl.api.core.DefaultContextInteractions
+import io.sarl.api.core.Schedules
+import java.util.Random
+
+agent ExplorerAgentt {
+	uses Logging, DefaultContextInteractions, Schedules
+
+	// Nomi corretti e allineati
+	var INCINERATOR_posX = GlobalConfig.GRID_SIZE / 2
+	var INCINERATOR_posY = GlobalConfig.GRID_SIZE / 2
+
+	var my_x = 0
+	var my_y = 0
+	var return_x = 0
+	var return_y = 0
+	var random = new Random()
+	var state = "PATROLLING"
+
+	on Initialize {
+		if (occurrence.parameters.size >= 2) {
+			my_x = occurrence.parameters.get(0) as Integer
+			my_y = occurrence.parameters.get(1) as Integer
+		}
+
+		info("SPWN: Robot spawned at: " + my_x + "," + my_y + ". Starting patrol.")
+		emit(new NextCellMovement(my_x, my_y))
+	}
+
+	on EnvironmentPerception {
+		// Update internal coordinates
+		my_x = occurrence.x
+		my_y = occurrence.y
+
+		// STATE: PATROLLING
+		if (state == "PATROLLING") {
+			if (occurrence.hasDirt) {
+				info("FOUND: Garbage at " + my_x + "," + my_y + ". Picking it up and heading to the incinerator.")
+				emit(new PickGarbage(my_x, my_y))
+				return_x = my_x
+				return_y = my_y
+				state = "TO_INCINERATOR"
+				moveToward(INCINERATOR_posX, INCINERATOR_posY)
+			} else {
+				moveRandomly()
+			}
+		} // STATE: HEADING TO INCINERATOR
+		else if (state == "TO_INCINERATOR") {
+			if (my_x == INCINERATOR_posX && my_y == INCINERATOR_posY) {
+				info("ARRIVE: Reached the incinerator. Dropping the garbage!")
+				emit(new DropGarbage())
+				state = "RETURNING"
+				moveToward(return_x, return_y)
+			} else {
+				moveToward(INCINERATOR_posX, INCINERATOR_posY)
+			}
+		} // STATE: RETURNING TO INTERRUPTION POINT (Reinserito!)
+		else if (state == "RETURNING") {
+			if (my_x == return_x && my_y == return_y) {
+				info("RETURN: Back at the interruption point. Resuming patrol.")
+				state = "PATROLLING"
+				moveRandomly()
+			} else {
+				moveToward(return_x, return_y)
+			}
+		}
+	}
+
+	def moveToward(target_x : int, target_y : int) {
+		var next_x = my_x
+		var next_y = my_y
+
+		if(my_x < target_x) next_x++ else if(my_x > target_x) next_x--
+		if(my_y < target_y) next_y++ else if(my_y > target_y) next_y--
+
+		// TRICK: Freeze variables in immutable constants (val) before passing them to the async timer
+		val final_x = next_x
+		val final_y = next_y
+
+		in(500)[emit(new NextCellMovement(final_x, final_y))]
+	}
+
+	def moveRandomly {
+		var dx = random.nextInt(3) - 1 // Generates -1, 0, or 1
+		var dy = random.nextInt(3) - 1
+
+		var next_x = my_x + dx
+		var next_y = my_y + dy
+
+		// Check boundaries to avoid stepping outside the map using GlobalConfig
+		if(next_x < 0) next_x = 0
+		if(next_x >= GlobalConfig.GRID_SIZE) next_x = GlobalConfig.GRID_SIZE - 1
+		if(next_y < 0) next_y = 0
+		if(next_y >= GlobalConfig.GRID_SIZE) next_y = GlobalConfig.GRID_SIZE - 1
+
+		// TRICK: Freeze calculated variables for the lambda scope
+		val final_x = next_x
+		val final_y = next_y
+
+		// Wait half a second and notify the new cell movement
+		in(500)[emit(new NextCellMovement(final_x, final_y))]
+	}
+}
